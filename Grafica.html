@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prenotazione Ordine</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; line-height: 1.6; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { position: sticky; top: 0; background: #fff; padding: 10px; border-bottom: 2px solid #007bff; margin-bottom: 20px; z-index: 100; }
+        .total-display { font-size: 1.5rem; color: #007bff; font-weight: bold; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        input[type="number"] { width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #218838; }
+        #conferma { display: none; text-align: center; }
+        .order-id { font-family: monospace; font-size: 1.2rem; background: #eee; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="form-container">
+        <div class="header">
+            Totale provvisorio: <span class="total-display">€<span id="live-total">0</span></span>
+        </div>
+
+        <h3>I tuoi dati</h3>
+        <label>Nome Completo</label>
+        <input type="text" id="nome" placeholder="Inserisci il tuo nome" required>
+
+        <h3>Menù</h3>
+        
+        <!-- Panino -->
+        <div class="item-row">
+            <span>Panino (8.00€)</span>
+            <input type="number" class="qty" data-price="8" value="0" min="0">
+        </div>
+
+        <!-- Menù Completo -->
+        <div class="item-row">
+            <span>Menù Completo (15.00€)</span>
+            <input type="number" class="qty" data-price="15" value="0" min="0">
+        </div>
+
+        <!-- Bibita -->
+        <div class="item-row">
+            <span>Bibita (2.50€)</span>
+            <input type="number" class="qty" data-price="2.5" value="0" min="0">
+        </div>
+
+        <button onclick="inviaOrdine()">Conferma e Prenota</button>
+    </div>
+
+    <!-- Pagina di Conferma -->
+    <div class="card" id="conferma">
+        <h2 style="color: #28a745;">Ordine Ricevuto! ✅</h2>
+        <p>Grazie <strong id="res-nome"></strong>,</p>
+        <p>Il tuo numero di prenotazione è:</p>
+        <p class="order-id" id="res-id"></p>
+        <p>Totale da pagare: <strong style="font-size: 1.2rem;">€<span id="res-totale"></span></strong></p>
+        <button onclick="window.location.reload()" style="background: #6c757d;">Nuovo Ordine</button>
+    </div>
+
+    <script>
+        const qtyInputs = document.querySelectorAll('.qty');
+        const liveTotalDisplay = document.getElementById('live-total');
+
+        // Calcolo automatico mentre l'utente cambia le quantità
+        qtyInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                let total = 0;
+                qtyInputs.forEach(i => {
+                    total += parseFloat(i.value || 0) * parseFloat(i.getAttribute('data-price'));
+                });
+                liveTotalDisplay.innerText = total.toFixed(2);
+            });
+        });
+
+        function inviaOrdine() {
+            const nome = document.getElementById('nome').value;
+            const totale = liveTotalDisplay.innerText;
+
+            if (!nome || totale == "0.00") {
+                alert("Inserisci il nome e almeno un prodotto!");
+                return;
+            }
+
+            // Genera un numero d'ordine casuale (es: ORD-12345)
+            const orderId = "ORD-" + Math.floor(10000 + Math.random() * 90000);
+
+            // Mostra la conferma
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('conferma').style.display = 'block';
+            
+            document.getElementById('res-nome').innerText = nome;
+            document.getElementById('res-id').innerText = orderId;
+            document.getElementById('res-totale').innerText = totale;
+        }
+    </script>
+</body>
+</html>
