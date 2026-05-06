@@ -3,100 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prenotazione Ordine</title>
+    <title>Prenotazione Grigliata</title>
     <style>
-        body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; line-height: 1.6; background-color: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { position: sticky; top: 0; background: #fff; padding: 10px; border-bottom: 2px solid #007bff; margin-bottom: 20px; z-index: 100; }
-        .total-display { font-size: 1.5rem; color: #007bff; font-weight: bold; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        input[type="number"] { width: 60px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-        button:hover { background: #218838; }
-        #conferma { display: none; text-align: center; }
-        .order-id { font-family: monospace; font-size: 1.2rem; background: #eee; padding: 5px 10px; }
+        :root { --primary: #d32f2f; --bg: #f4f4f4; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { color: var(--primary); text-align: center; margin-top: 0; }
+        .item-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; position: relative; }
+        .item-card h3 { margin: 0; font-size: 1.1rem; }
+        .price { color: #666; font-size: 0.9rem; }
+        input[type="number"] { width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; float: right; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .menu-select { margin-top: 10px; display: none; background: #fff8f8; padding: 10px; border-radius: 4px; border: 1px solid #ffe0e0; }
+        select { width: 100%; padding: 8px; margin-top: 5px; }
+        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 15px; margin: 20px -20px -20px -20px; border-radius: 0 0 12px 12px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+        button { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+        #loading { text-align: center; color: #666; padding: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card" id="form-container">
-        <div class="header">
-            Totale provvisorio: <span class="total-display">€<span id="live-total">0</span></span>
-        </div>
-
-        <h3>I tuoi dati</h3>
-        <label>Nome Completo</label>
-        <input type="text" id="nome" placeholder="Inserisci il tuo nome" required>
-
-        <h3>Menù</h3>
+<div class="container" id="main-content">
+    <h1>Grigliata Rogoredo</h1>
+    <div id="loading">Caricamento listino...</div>
+    
+    <div id="form-container" style="display:none;">
+        <label>Nome e Cognome</label>
+        <input type="text" id="user_name" placeholder="Inserisci il tuo nome">
         
-        <!-- Panino -->
-        <div class="item-row">
-            <span>Panino (8.00€)</span>
-            <input type="number" class="qty" data-price="8" value="0" min="0">
-        </div>
-
-        <!-- Menù Completo -->
-        <div class="item-row">
-            <span>Menù Completo (15.00€)</span>
-            <input type="number" class="qty" data-price="15" value="0" min="0">
-        </div>
-
-        <!-- Bibita -->
-        <div class="item-row">
-            <span>Bibita (2.50€)</span>
-            <input type="number" class="qty" data-price="2.5" value="0" min="0">
-        </div>
-
-        <button onclick="inviaOrdine()">Conferma e Prenota</button>
+        <div id="prodotti-list"></div>
+        
+        <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
+        <button onclick="inviaOrdine()">CONFERMA ORDINE</button>
     </div>
 
-    <!-- Pagina di Conferma -->
-    <div class="card" id="conferma">
-        <h2 style="color: #28a745;">Ordine Ricevuto! ✅</h2>
-        <p>Grazie <strong id="res-nome"></strong>,</p>
-        <p>Il tuo numero di prenotazione è:</p>
-        <p class="order-id" id="res-id"></p>
-        <p>Totale da pagare: <strong style="font-size: 1.2rem;">€<span id="res-totale"></span></strong></p>
-        <button onclick="window.location.reload()" style="background: #6c757d;">Nuovo Ordine</button>
+    <div id="conferma" style="display:none; text-align: center;">
+        <h2 style="color: #2e7d32;">Ordine Inviato! ✅</h2>
+        <p>Il tuo codice prenotazione è:</p>
+        <h1 id="res-id" style="background: #eee; padding: 10px; letter-spacing: 5px;">-----</h1>
+        <p>Totale da pagare alla cassa: <span id="res-tot">0</span>€</p>
+        <button onclick="location.reload()" style="background: #666;">Fai un altro ordine</button>
     </div>
+</div>
 
-    <script>
-        const qtyInputs = document.querySelectorAll('.qty');
-        const liveTotalDisplay = document.getElementById('live-total');
+<script>
+    // --- CONFIGURAZIONE ---
+    const WEB_APP_URL = "INCOLLA_QUI_IL_TUO_URL_APPS_SCRIPT";
+    let listino = [];
 
-        // Calcolo automatico mentre l'utente cambia le quantità
-        qtyInputs.forEach(input => {
-            input.addEventListener('input', () => {
-                let total = 0;
-                qtyInputs.forEach(i => {
-                    total += parseFloat(i.value || 0) * parseFloat(i.getAttribute('data-price'));
-                });
-                liveTotalDisplay.innerText = total.toFixed(2);
-            });
+    // --- CARICAMENTO DINAMICO ---
+    async function loadListino() {
+        try {
+            const response = await fetch(WEB_APP_URL);
+            listino = await response.json();
+            renderProdotti();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('form-container').style.display = 'block';
+        } catch (e) {
+            document.getElementById('loading').innerText = "Errore nel caricamento del listino.";
+        }
+    }
+
+    function renderProdotti() {
+        const listDiv = document.getElementById('prodotti-list');
+        listino.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item-card';
+            
+            let html = `
+                <h3>${item.name}</h3>
+                <span class="price">€${item.price.toFixed(2)}</span>
+                <input type="number" id="qty_${item.key}" value="0" min="0" onchange="updateUI('${item.key}')">
+            `;
+
+            // Aggiunge la scelta bibita se è un menu
+            if (item.key.startsWith('men_')) {
+                html += `
+                    <div id="select_${item.key}" class="menu-select">
+                        <label>Scegli bibita/birra:</label>
+                        <select id="bibita_${item.key}">
+                            <option value="coca">Coca Cola</option>
+                            <option value="fan">Fanta</option>
+                            <option value="spr">Sprite</option>
+                            <option value="thl">The Limone</option>
+                            <option value="thp">The Pesca</option>
+                            <option value="bir_p">Birra Piccola (Inclusa)</option>
+                        </select>
+                    </div>
+                `;
+            }
+            card.innerHTML = html;
+            listDiv.appendChild(card);
+        });
+    }
+
+    function updateUI(key) {
+        const qty = document.getElementById('qty_' + key).value;
+        const selectDiv = document.getElementById('select_' + key);
+        if (selectDiv) selectDiv.style.display = qty > 0 ? 'block' : 'none';
+        
+        let totale = 0;
+        listino.forEach(item => {
+            const q = document.getElementById('qty_' + item.key).value;
+            totale += q * item.price;
+        });
+        document.getElementById('display-total').innerText = totale.toFixed(2);
+    }
+
+    function generaID() {
+        const c = 'BCDFGHJKLMNPQRSTVWXYZ';
+        let res = '';
+        for (let i = 0; i < 5; i++) res += c.charAt(Math.floor(Math.random() * c.length));
+        return res;
+    }
+
+    async function inviaOrdine() {
+        const nome = document.getElementById('user_name').value;
+        if (!nome) return alert("Inserisci il tuo nome!");
+
+        const orderId = generaID();
+        const payload = { nome: nome, ordine: orderId };
+        
+        listino.forEach(item => {
+            payload['qty_' + item.key] = document.getElementById('qty_' + item.key).value;
+            if (item.key.startsWith('men_')) {
+                payload['bib_scelta_' + (item.key.includes('ham') ? 'ham' : 'sal')] = document.getElementById('bibita_' + item.key).value;
+            }
         });
 
-        function inviaOrdine() {
-            const nome = document.getElementById('nome').value;
-            const totale = liveTotalDisplay.innerText;
-
-            if (!nome || totale == "0.00") {
-                alert("Inserisci il nome e almeno un prodotto!");
-                return;
-            }
-
-            // Genera un numero d'ordine casuale (es: ORD-12345)
-            const orderId = "ORD-" + Math.floor(10000 + Math.random() * 90000);
-
-            // Mostra la conferma
+        document.getElementById('form-container').style.opacity = "0.5";
+        
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            });
+            
             document.getElementById('form-container').style.display = 'none';
             document.getElementById('conferma').style.display = 'block';
-            
-            document.getElementById('res-nome').innerText = nome;
             document.getElementById('res-id').innerText = orderId;
-            document.getElementById('res-totale').innerText = totale;
+            document.getElementById('res-tot').innerText = document.getElementById('display-total').innerText;
+        } catch (e) {
+            alert("Errore invio: " + e);
         }
-    </script>
+    }
+
+    loadListino();
+</script>
+
 </body>
 </html>
