@@ -52,17 +52,20 @@
     let listino = [];
 
     // --- CARICAMENTO DINAMICO ---
-    async function loadListino() {
-        try {
-            const response = await fetch(WEB_APP_URL);
-            listino = await response.json();
-            renderProdotti();
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('form-container').style.display = 'block';
-        } catch (e) {
-            document.getElementById('loading').innerText = "Errore nel caricamento del listino.";
-        }
+async function loadListino() {
+    try {
+        // Aggiungiamo { redirect: 'follow' } per gestire il comportamento di Google
+        const response = await fetch(WEB_APP_URL, { redirect: 'follow' });
+        if (!response.ok) throw new Error('Network response was not ok');
+        listino = await response.json();
+        renderProdotti();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('form-container').style.display = 'block';
+    } catch (e) {
+        console.error("Errore dettagliato:", e);
+        document.getElementById('loading').innerText = "Errore nel caricamento del listino. Verifica la console del browser.";
     }
+}
 
     function renderProdotti() {
         const listDiv = document.getElementById('prodotti-list');
