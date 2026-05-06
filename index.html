@@ -69,17 +69,21 @@ async function loadListino() {
 
     function renderProdotti() {
         const listDiv = document.getElementById('prodotti-list');
+        listDiv.innerHTML = ''; // Pulisce il contenitore
+        
         listino.forEach(item => {
             const card = document.createElement('div');
             card.className = 'item-card';
             
+            // TRUCCO: Se il prezzo non è un numero, lo forziamo a 0
+            const prezzoSicuro = (Number(item.price) || 0).toFixed(2);
+            
             let html = `
                 <h3>${item.name}</h3>
-                <span class="price">€${item.price.toFixed(2)}</span>
+                <span class="price">€${prezzoSicuro}</span>
                 <input type="number" id="qty_${item.key}" value="0" min="0" onchange="updateUI('${item.key}')">
             `;
 
-            // Aggiunge la scelta bibita se è un menu
             if (item.key.startsWith('men_')) {
                 html += `
                     <div id="select_${item.key}" class="menu-select">
@@ -100,15 +104,17 @@ async function loadListino() {
         });
     }
 
-    function updateUI(key) {
-        const qty = document.getElementById('qty_' + key).value;
+function updateUI(key) {
+        const qtyInput = document.getElementById('qty_' + key);
+        const qty = parseInt(qtyInput.value) || 0;
         const selectDiv = document.getElementById('select_' + key);
         if (selectDiv) selectDiv.style.display = qty > 0 ? 'block' : 'none';
         
         let totale = 0;
         listino.forEach(item => {
-            const q = document.getElementById('qty_' + item.key).value;
-            totale += q * item.price;
+            const q = parseInt(document.getElementById('qty_' + item.key).value) || 0;
+            const p = Number(item.price) || 0;
+            totale += q * p;
         });
         document.getElementById('display-total').innerText = totale.toFixed(2);
     }
