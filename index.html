@@ -9,46 +9,62 @@
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { color: var(--primary); text-align: center; margin-top: 0; }
-        .item-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 10px; position: relative; }
-        .item-card h3 { margin: 0; font-size: 1.1rem; }
-        .price { color: #666; font-size: 0.9rem; }
-        input[type="number"] { width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #ccc; float: right; }
-        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        .menu-select { margin-top: 10px; display: none; background: #fff8f8; padding: 10px; border-radius: 4px; border: 1px solid #ffe0e0; }
-        select { width: 100%; padding: 8px; margin-top: 5px; }
-        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 15px; margin: 20px -20px -20px -20px; border-radius: 0 0 12px 12px; text-align: center; font-size: 1.2rem; font-weight: bold; }
-        button { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
-        #loading { text-align: center; color: #666; padding: 20px; }
+        
+        /* Stile Categorie */
+        .category-header { 
+            background: #eee; padding: 12px; margin-top: 10px; border-radius: 6px; 
+            cursor: pointer; font-weight: bold; display: flex; justify-content: space-between;
+        }
+        .category-content { display: none; padding: 5px; border: 1px solid #eee; border-top: none; }
+        
+        .item-card { border-bottom: 1px solid #ddd; padding: 15px 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        .item-info { flex: 1; }
+        .item-card h3 { margin: 0; font-size: 1rem; }
+        .price { color: #666; font-size: 0.85rem; }
+        
+        input[type="number"] { width: 50px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; text-align: center; }
+        input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
+        
+        .bibite-container { width: 100%; background: #fff8f8; padding: 0 10px; border-radius: 4px; margin-top: 10px; box-sizing: border-box; }
+        .bibita-row { padding: 8px 0; border-bottom: 1px dashed #ffcdd2; font-size: 0.9rem; }
+        select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; }
+
+        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 15px; margin: 20px -20px -20px -20px; border-radius: 0 0 12px 12px; text-align: center; font-size: 1.2rem; font-weight: bold; z-index: 10; }
+        button { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        #loading { text-align: center; color: #666; padding: 40px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container" id="main-content">
+<div class="container">
     <h1>Grigliata Rogoredo</h1>
-    <div id="loading">Caricamento listino...</div>
+    <div id="loading">Caricamento listino in corso...</div>
     
     <div id="form-container" style="display:none;">
-        <label>Nome e Cognome</label>
-        <input type="text" id="user_name" placeholder="Inserisci il tuo nome">
+        <label><b>Nome e Cognome</b></label>
+        <input type="text" id="user_name" placeholder="Esempio: Mario Rossi">
         
         <div id="prodotti-list"></div>
         
-        <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
-        <button onclick="inviaOrdine()">CONFERMA ORDINE</button>
+        <div class="total-bar">Totale Ordine: <span id="display-total">0.00</span>€</div>
+        <button onclick="inviaOrdine()">CONFERMA E INVIA</button>
     </div>
 
-    <div id="conferma" style="display:none; text-align: center;">
-        <h2 style="color: #2e7d32;">Ordine Inviato! ✅</h2>
-        <p>Il tuo codice prenotazione è:</p>
-        <h1 id="res-id" style="background: #eee; padding: 10px; letter-spacing: 5px;">-----</h1>
-        <p>Totale da pagare alla cassa: <span id="res-tot">0</span>€</p>
-        <button onclick="location.reload()" style="background: #666;">Fai un altro ordine</button>
+    <div id="conferma" style="display:none; text-align: center; padding: 20px;">
+        <h2 style="color: #2e7d32;">Ordine Ricevuto! ✅</h2>
+        <p>Mostra questo codice alla cassa:</p>
+        <h1 id="res-id" style="background: #eee; padding: 15px; letter-spacing: 5px; border-radius: 8px;">-----</h1>
+        <p>Totale da pagare: <b><span id="res-tot">0</span>€</b></p>
+        <button onclick="location.reload()" style="background: #666;">Fai un nuovo ordine</button>
     </div>
 </div>
 
-const WEB_APP_URL = "IL_TUO_URL_QUI";
+<script>
+    // --- 1. CONFIGURAZIONE ---
+    const WEB_APP_URL = "INCOLLA_QUI_IL_TUO_URL_APPS_SCRIPT"; 
     let listino = [];
 
+    // --- 2. CARICAMENTO ---
     async function loadListino() {
         try {
             const response = await fetch(WEB_APP_URL, { redirect: 'follow' });
@@ -57,39 +73,51 @@ const WEB_APP_URL = "IL_TUO_URL_QUI";
             document.getElementById('loading').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
         } catch (e) {
-            document.getElementById('loading').innerText = "Errore caricamento. Riprova.";
+            document.getElementById('loading').innerText = "Errore di connessione. Ricarica la pagina.";
+            console.error(e);
         }
     }
 
+    // --- 3. GENERAZIONE INTERFACCIA ---
     function renderCategorie() {
         const listDiv = document.getElementById('prodotti-list');
         listDiv.innerHTML = '';
         
-        // Raggruppa per categoria
-        const cats = [...new Set(listino.map(item => item.category))];
+        // Estrae categorie uniche
+        const categorie = [...new Set(listino.map(item => item.category))];
         
-        cats.forEach(cat => {
-            const catDiv = document.createElement('div');
-            catDiv.innerHTML = `<h2 onclick="this.nextSibling.style.display = this.nextSibling.style.display === 'none' ? 'block' : 'none'" style="cursor:pointer; background:#eee; padding:10px; border-radius:5px;">📂 ${cat} (clicca)</h2>`;
+        categorie.forEach(cat => {
+            const catGroup = document.createElement('div');
             
-            const itemsDiv = document.createElement('div');
-            itemsDiv.style.display = 'none'; // Partono chiuse
+            const header = document.createElement('div');
+            header.className = 'category-header';
+            header.innerHTML = `<span>${cat}</span> <span>▼</span>`;
+            header.onclick = () => {
+                const content = header.nextElementSibling;
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+            };
+
+            const content = document.createElement('div');
+            content.className = 'category-content';
             
             listino.filter(i => i.category === cat).forEach(item => {
+                const p = (Number(item.price) || 0).toFixed(2);
                 const card = document.createElement('div');
                 card.className = 'item-card';
-                const pSicuro = (Number(item.price) || 0).toFixed(2);
-                
                 card.innerHTML = `
-                    <h3>${item.name}</h3>
-                    <span class="price">€${pSicuro}</span>
+                    <div class="item-info">
+                        <h3>${item.name}</h3>
+                        <span class="price">€${p}</span>
+                    </div>
                     <input type="number" id="qty_${item.key}" value="0" min="0" onchange="updateUI('${item.key}')">
-                    <div id="bibite_container_${item.key}"></div>
+                    <div id="bibite_container_${item.key}" class="bibite-container"></div>
                 `;
-                itemsDiv.appendChild(card);
+                content.appendChild(card);
             });
-            catDiv.appendChild(itemsDiv);
-            listDiv.appendChild(catDiv);
+
+            catGroup.appendChild(header);
+            catGroup.appendChild(content);
+            listDiv.appendChild(catGroup);
         });
     }
 
@@ -97,20 +125,20 @@ const WEB_APP_URL = "IL_TUO_URL_QUI";
         const qty = parseInt(document.getElementById('qty_' + key).value) || 0;
         const container = document.getElementById('bibite_container_' + key);
         
-        // Gestione bibite multiple per ogni menu
+        // Se è un menu, crea N selettori bibita
         if (key.startsWith('men_')) {
             container.innerHTML = '';
             for (let i = 1; i <= qty; i++) {
                 container.innerHTML += `
-                    <div style="margin-top:5px; font-size:0.8rem;">
-                        Bibita #${i}: 
-                        <select class="bibita-scelta" data-key="${key}">
+                    <div class="bibita-row">
+                        Scegli bibita per Menu #${i}:
+                        <select class="bibita-scelta" data-parent="${key}">
                             <option value="coca">Coca Cola</option>
                             <option value="fan">Fanta</option>
                             <option value="spr">Sprite</option>
                             <option value="thl">The Limone</option>
                             <option value="thp">The Pesca</option>
-                            <option value="bir_p">Birra Piccola</option>
+                            <option value="bir_p">Birra Piccola (Inclusa)</option>
                         </select>
                     </div>`;
             }
@@ -124,9 +152,61 @@ const WEB_APP_URL = "IL_TUO_URL_QUI";
         document.getElementById('display-total').innerText = totale.toFixed(2);
     }
 
-    // Nota: La funzione inviaOrdine andrebbe leggermente adattata 
-    // per inviare un array di bibite se necessario, 
-    // ma per ora questo sistema visuale funziona!
+    // --- 4. INVIO ---
+    function generaID() {
+        const c = 'BCDFGHJKLMNPQRSTVWXYZ';
+        let res = '';
+        for (let i = 0; i < 5; i++) res += c.charAt(Math.floor(Math.random() * c.length));
+        return res;
+    }
+
+    async function inviaOrdine() {
+        const nome = document.getElementById('user_name').value.trim();
+        if (!nome) return alert("Per favore, inserisci il tuo nome.");
+
+        const orderId = generaID();
+        const payload = { nome: nome, ordine: orderId };
+        let haOrdinatoQualcosa = false;
+
+        listino.forEach(item => {
+            const q = parseInt(document.getElementById('qty_' + item.key).value) || 0;
+            if (q > 0) {
+                haOrdinatoQualcosa = true;
+                payload['qty_' + item.key] = q;
+            }
+        });
+
+        if (!haOrdinatoQualcosa) return alert("L'ordine è vuoto!");
+
+        // Raccoglie le bibite dei menu (prendiamo la prima per semplicità nel backend attuale)
+        const primeBibite = {};
+        document.querySelectorAll('.bibita-row select').forEach(sel => {
+            const parent = sel.getAttribute('data-parent');
+            const bibKey = parent.includes('ham') ? 'bib_scelta_ham' : 'bib_scelta_sal';
+            payload[bibKey] = sel.value; // Invia l'ultima selezionata o la logica che preferisci
+        });
+
+        document.getElementById('form-container').style.opacity = "0.3";
+        document.getElementById('form-container').style.pointerEvents = "none";
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            });
+            
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('conferma').style.display = 'block';
+            document.getElementById('res-id').innerText = orderId;
+            document.getElementById('res-tot').innerText = document.getElementById('display-total').innerText;
+        } catch (e) {
+            alert("Errore invio: " + e);
+            document.getElementById('form-container').style.opacity = "1";
+        }
+    }
+
+    loadListino();
 </script>
 
 </body>
