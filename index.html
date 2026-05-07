@@ -124,11 +124,14 @@
 
         if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
 
+        const codiceOrdine = Math.random().toString(36).substring(2, 7).toUpperCase();
+
         const payload = {
             nome,
             persone,
             totale: document.getElementById('display-total').innerText,
-            note: note
+            note: note,
+            codice: codiceOrdine
         };
 
         let qtyTot = 0;
@@ -153,32 +156,15 @@
         }, 1000);
 
         try {
-        const resp = await fetch(WEB_APP_URL, {
+            await fetch(WEB_APP_URL, {
                 method: 'POST',
-                mode: 'cors',
+                mode: 'no-cors',
                 body: JSON.stringify(payload)
             });
-            const result = await resp.json();
             clearInterval(timer);
-
-            if (result.status === "CHIUSO") {
-                alert(result.messaggio);
-                btn.disabled = false;
-                btn.innerText = "CONFERMA ORDINE";
-                return;
-            }
-
-            if (result.status === "ERROR") {
-                alert("Errore dal server: " + result.messaggio);
-                btn.disabled = false;
-                btn.innerText = "CONFERMA ORDINE";
-                return;
-            }
-
-            // status === "OK"
             document.getElementById('form-container').style.display = 'none';
             document.getElementById('successo').style.display = 'block';
-            document.getElementById('res-id').innerText = result.codice || "✓";
+            document.getElementById('res-id').innerText = codiceOrdine;
         } catch (e) {
             clearInterval(timer);
             btn.disabled = false;
