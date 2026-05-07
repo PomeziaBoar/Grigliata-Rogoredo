@@ -6,86 +6,6 @@
     <title>Prenotazione Grigliata</title>
     <style>
         :root { --primary: #d32f2f; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h1 { color: var(--primary); text-align: center; margin-top: 0; }
-        .section-label { font-weight: bold; margin: 15px 0 5px; display: block; color: #444; }
-        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        
-        .cat-group { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
-        .cat-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
-        .cat-content { display: none; padding: 10px; background: #fff; }
-        
-        .item-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #fafafa; }
-        .item-info { flex: 1; }
-        .item-info h3 { margin: 0; font-size: 0.95rem; }
-        .item-info span { color: #888; font-size: 0.85rem; }
-        
-        .bibite-sel { width: 100%; background: #fff9f9; padding: 10px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; }
-        select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; }
-
-        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 18px; margin: 20px -25px -25px; text-align: center; font-size: 1.3rem; font-weight: bold; }
-        button.send { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 20px; font-weight: bold; }
-        #loading { text-align: center; padding: 50px; font-weight: bold; color: #666; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>Caricamento...</h1>
-    <div id="loading">Connessione al listino in corso...</div>
-    
-    <div id="form-container" style="display:none;">
-        <label class="section-label">Informazioni Prenotazione</label>
-        <input type="text" id="user_name" placeholder="Nome e Cognome">
-        <input type="number" id="num_persone" placeholder="In quanti siete?" min="1" value="1">
-        
-        <div id="status-posti" style="font-size: 0.8rem; text-align: center; margin-bottom: 15px;"></div>
-        
-        <div id="prodotti-list"></div>
-        
-        <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
-        <button class="send" onclick="inviaOrdine()">CONFERMA ORDINE</button>
-    </div>
-
-    <div id="successo" style="display:none; text-align: center;">
-        <h2 style="color: #2e7d32;">Ordine Inviato! ✅</h2>
-        <p>Codice da mostrare in cassa:</p>
-        <h1 id="res-id" style="background: #eee; padding: 20px; border-radius: 10px; letter-spacing: 5px;">---</h1>
-        <button onclick="location.reload()" style="background:#666; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Fai un altro ordine</button>
-    </div>
-</div>
-
-<script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzIbyw_YuxGlU8os8Rtg2rziq2k9IMeWYF1UYd4Qi6okLsrwHlhKx9gNsQU2bVxvDNAUw/exec"; 
-    let listino = [];
-    let postiDisponibili = 0;
-
-    async function loadData() {
-        try {
-            const resp = await fetch(WEB_APP_URL, { redirect: 'follow' });
-            const data = await resp.json();
-            listino = data.prodotti;
-            postiDisponibili = data.postiResidui;
-            
-            document.querySelector('h1').innerText = data.titolo;
-            document.getElementById('status-posti').innerText = `Posti ancora disponibili: ${postiDisponibili}`;
-            
-            if (postiDisponibili <= 0) {
-                document.getElementById('loading').innerHTML = "<h2 style='color:red'>PRENOTAZIONI CHIUSE (Sold Out)</h2>";
-                return;
-            }
-
-            render();
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('f<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prenotazione Grigliata</title>
-    <style>
-        :root { --primary: #d32f2f; --bg: #f8f9fa; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
         .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { color: var(--primary); text-align: center; }
@@ -94,43 +14,44 @@
         .cat-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
         .cat-content { display: none; padding: 10px; }
         .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
-        .bibite-sel { background: #fff5f5; padding: 10px; border-radius: 6px; margin-top: 5px; font-size: 0.9rem; }
-        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 20px; margin: 20px -25px -25px; text-align: center; font-size: 1.2rem; font-weight: bold; }
-        .send { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .bibite-sel { background: #fff5f5; padding: 10px; border-radius: 6px; margin-top: 5px; font-size: 0.9rem; border: 1px solid #ffe0e0; }
+        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 20px; margin: 20px -25px -25px; text-align: center; font-size: 1.2rem; font-weight: bold; z-index: 10; }
+        .send { width: 100%; padding: 18px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1.1rem; }
+        .send:disabled { background: #999 !important; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1 id="main-title">Grigliata Rogoredo</h1>
-    <div id="loading" style="text-align:center">Caricamento listino...</div>
+    <div id="loading" style="text-align:center; padding: 40px;">Caricamento listino...</div>
     
     <div id="form-container" style="display:none;">
         <input type="text" id="user_name" placeholder="Tuo Nome e Cognome">
         <input type="number" id="num_persone" placeholder="In quanti siete?" min="1" value="1">
         <div id="status-posti" style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
+        
         <div id="prodotti-list"></div>
+        
         <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
-        <button class="send" onclick="inviaOrdine()">CONFERMA ORDINE</button>
+        <button class="send" id="btn-invia" onclick="inviaOrdine()">CONFERMA ORDINE</button>
     </div>
 
     <div id="successo" style="display:none; text-align:center;">
-        <h2 style="color:#2e7d32;">Inviato! ✅</h2>
-        <p>Codice prenotazione:</p>
-        <h1 id="res-id" style="background:#eee; padding:20px; letter-spacing:5px;">---</h1>
-        <button onclick="location.reload()">Nuovo Ordine</button>
+        <h2 style="color:#2e7d32;">Ordine Inviato! ✅</h2>
+        <p>Mostra questo codice in cassa:</p>
+        <h1 id="res-id" style="background:#f4f4f4; padding:20px; border: 2px dashed #ccc; letter-spacing: 5px;">---</h1>
+        <button onclick="location.reload()" style="margin-top:20px; padding:10px; cursor:pointer;">Fai un nuovo ordine</button>
     </div>
 </div>
 
 <script>
-    const WEB_APP_URL = "INCOLLA_QUI_IL_TUO_NUOVO_URL_DEPLOY"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwxyK3ln4zbscynS4XZZjwK30QXzOvPFy8U5BiOOeO04Sgl3P-etOinBoJ-z0pbzoCVbw/exec"; 
     let listino = [];
 
     async function loadData() {
         try {
-            // Aggiungiamo redirect follow per risolvere problemi CORS su alcuni browser
             const resp = await fetch(WEB_APP_URL, { redirect: 'follow' });
-            if (!resp.ok) throw new Error();
             const data = await resp.json();
             listino = data.prodotti;
             document.getElementById('main-title').innerText = data.titolo;
@@ -139,119 +60,111 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
         } catch (e) {
-            document.getElementById('loading').innerText = "Errore connessione. Verifica l'URL dello script.";
+            document.getElementById('loading').innerText = "Errore di connessione. Riprova.";
         }
     }
 
-    
+    function render() {
+        const listDiv = document.getElementById('prodotti-list');
+        const cats = [...new Set(listino.map(p => p.category))];
+        cats.forEach(c => {
+            const group = document.createElement('div');
+            group.className = 'cat-group';
+            group.innerHTML = `<div class="cat-header" onclick="toggleCat(this)">${c} <span>▼</span></div>`;
+            const content = document.createElement('div');
+            content.className = 'cat-content';
+            listino.filter(p => p.category === c).forEach(p => {
+                const prezzoVal = parseFloat(p.price) || 0;
+                content.innerHTML += `
+                    <div class="item-card">
+                        <div><b>${p.name}</b><br><small>€${prezzoVal.toFixed(2)}</small></div>
+                        <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
+                    </div>
+                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
+            });
+            group.appendChild(content);
+            listDiv.appendChild(group);
+        });
+    }
+
+    function toggleCat(el) {
+        const content = el.nextElementSibling;
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    }
 
     function updateUI(key) {
         const q = parseInt(document.getElementById('qty_' + key).value) || 0;
         const container = document.getElementById('bibs_' + key);
         const p = listino.find(i => i.key === key);
         
-        // Cerca se nei componenti del menu ci sono le key delle bevande (key_22, key_23, key_24)
         const hasDrink = p.items.some(id => ['key_22', 'key_23', 'key_24'].includes(id));
 
         if (hasDrink && q > 0) {
             container.style.display = 'block';
             let options = p.items.some(id => id === 'key_23' || id === 'key_24') 
                 ? '<option value="birra">Birra</option>' 
-                : '<option value="coca">Coca</option><option value="fanta">Fanta</option><option value="sprite">Sprite</option><option value="the">The</option>';
-            container.innerHTML = 'Gusti bibite:';
+                : '<option value="coca">Coca</option><option value="fanta">Fanta</option><option value="the">The</option>';
+            container.innerHTML = '<b>Gusti bibite:</b><br>';
             for(let i=0; i<q; i++) container.innerHTML += `<select class="sel-bib">${options}</select>`;
         } else {
             container.style.display = 'none';
         }
 
         let tot = 0;
-        listino.forEach(item => tot += (parseInt(document.getElementById('qty_'+item.key).value)||0) * item.price);
+        listino.forEach(item => {
+            const qItem = parseInt(document.getElementById('qty_'+item.key).value) || 0;
+            tot += qItem * item.price;
+        });
         document.getElementById('display-total').innerText = tot.toFixed(2);
     }
 
-// ... (mantenere la parte iniziale dell'HTML/CSS inviata prima)
+    async function inviaOrdine() {
+        const btn = document.getElementById('btn-invia');
+        const nome = document.getElementById('user_name').value.trim();
+        const persone = document.getElementById('num_persone').value;
+        if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
 
-async function inviaOrdine() {
-    const btn = document.querySelector('button.send');
-    const nome = document.getElementById('user_name').value.trim();
-    const persone = parseInt(document.getElementById('num_persone').value);
-    
-    if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
+        const payload = { 
+            nome, persone, ordine: Math.random().toString(36).substring(2, 7).toUpperCase(), 
+            totale: document.getElementById('display-total').innerText,
+            note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
+        };
 
-    // DISABILITA PULSANTE
-    btn.disabled = true;
-    btn.style.backgroundColor = "#999";
-    let secondi = 30;
-    
-    const intervallo = setInterval(() => {
-        secondi--;
-        btn.innerText = `ATTENDI ${secondi}s...`;
-        if (secondi <= 0) {
-            clearInterval(intervallo);
-            btn.disabled = false;
-            btn.innerText = "CONFERMA ORDINE";
-            btn.style.backgroundColor = "#2e7d32";
-        }
-    }, 1000);
-
-    const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
-    const payload = { 
-        nome, persone, ordine: orderId, 
-        totale: document.getElementById('display-total').innerText,
-        note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
-    };
-
-    let itemScelti = 0;
-    listino.forEach(p => {
-        const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
-        if(q > 0) { payload['qty_' + p.key] = q; itemScelti++; }
-    });
-
-    if (itemScelti === 0) {
-        alert("Ordine vuoto!");
-        clearInterval(intervallo);
-        btn.disabled = false;
-        btn.innerText = "CONFERMA ORDINE";
-        btn.style.backgroundColor = "#2e7d32";
-        return;
-    }
-
-    try {
-        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        document.getElementById('form-container').style.display = 'none';
-        document.getElementById('successo').style.display = 'block';
-        document.getElementById('res-id').innerText = orderId;
-    } catch (e) {
-        alert("Errore invio.");
-    }
-}
-
-// Correzione nel render() per evitare il bug toFixed
-function render() {
-    const listDiv = document.getElementById('prodotti-list');
-    listDiv.innerHTML = ""; // Pulisce prima di renderizzare
-    const cats = [...new Set(listino.map(p => p.category))];
-    
-    cats.forEach(c => {
-        const group = document.createElement('div');
-        group.className = 'cat-group';
-        group.innerHTML = `<div class="cat-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">${c} <span>▼</span></div>`;
-        const content = document.createElement('div');
-        content.className = 'cat-content';
-        
-        listino.filter(p => p.category === c).forEach(p => {
-            const prezzoSicuro = typeof p.price === 'number' ? p.price : 0;
-            content.innerHTML += `
-                <div class="item-card">
-                    <div><b>${p.name}</b><br><small>€${prezzoSicuro.toFixed(2)}</small></div>
-                    <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
-                </div>
-                <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
+        let qtyTot = 0;
+        listino.forEach(p => {
+            const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
+            if(q > 0) { payload['qty_' + p.key] = q; qtyTot++; }
         });
-        group.appendChild(content);
-        listDiv.appendChild(group);
-    });
-}
+
+        if (qtyTot === 0) return alert("Scegli almeno un prodotto!");
+
+        // BLOCCO TASTO PER 30 SECONDI
+        btn.disabled = true;
+        let countdown = 30;
+        const timer = setInterval(() => {
+            countdown--;
+            btn.innerText = `ATTENDI ${countdown}s...`;
+            if(countdown <= 0) {
+                clearInterval(timer);
+                btn.innerText = "CONFERMA ORDINE";
+                btn.disabled = false;
+            }
+        }, 1000);
+
+        try {
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('successo').style.display = 'block';
+            document.getElementById('res-id').innerText = payload.ordine;
+        } catch (e) {
+            alert("Errore nell'invio. Riprova tra poco.");
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>
 
     loadData();
 </script>
