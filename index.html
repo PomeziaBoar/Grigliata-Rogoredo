@@ -35,7 +35,7 @@
         <input type="text" id="user_name" placeholder="Tuo Nome e Cognome">
         <label style="font-weight:bold; margin-bottom:5px; display:block;">Quanti siete?</label>
         <input type="number" id="num_persone" placeholder="Numero persone" min="1" value="1">
-        <div id="status-posti" style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
+        <div id="status-posti"></div>
         
         <div id="prodotti-list"></div>
 
@@ -54,7 +54,7 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj_rqGvL6KrX8MInyhXfZP0JHiYH83b5NQ4mf-ubrFFeHYqp72lNLmWofafT6sFu0CNQ/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwxyK3ln4zbscynS4XZZjwK30QXzOvPFy8U5BiOOeO04Sgl3P-etOinBoJ-z0pbzoCVbw/exec";
     let listino = [];
     let messaggioChiuso = "";
 
@@ -73,7 +73,7 @@
                 return;
             }
 
-            document.getElementById('status-posti').innerText = `Posti liberi: ${data.postiResidui}`;
+            document.getElementById('status-posti').style.display = 'none';
             render();
             document.getElementById('form-container').style.display = 'block';
         } catch (e) {
