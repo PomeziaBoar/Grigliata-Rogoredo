@@ -9,15 +9,16 @@
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
         .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
         h1 { color: var(--primary); text-align: center; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: sans-serif; font-size: 1rem; }
+        textarea { resize: vertical; min-height: 80px; }
         .cat-group { margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         .cat-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
         .cat-content { display: none; padding: 10px; }
         .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
-        .bibite-sel { background: #fff5f5; padding: 10px; border-radius: 6px; margin-top: 5px; font-size: 0.9rem; border: 1px solid #ffe0e0; }
         .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 20px; margin: 20px -25px -25px; text-align: center; font-size: 1.2rem; font-weight: bold; z-index: 10; }
         .send { width: 100%; padding: 18px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1.1rem; }
         .send:disabled { background: #999 !important; cursor: not-allowed; }
+        .chiuso-box { background: #fff3e0; border: 1px solid #ffb300; border-radius: 10px; padding: 20px; text-align: center; margin-top: 10px; color: #e65100; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -25,6 +26,10 @@
 <div class="container">
     <h1 id="main-title">Grigliata Rogoredo</h1>
     <div id="loading" style="text-align:center; padding: 40px;">Caricamento listino...</div>
+
+    <div id="chiuso-container" style="display:none;">
+        <div class="chiuso-box" id="chiuso-msg"></div>
+    </div>
     
     <div id="form-container" style="display:none;">
         <input type="text" id="user_name" placeholder="Tuo Nome e Cognome">
@@ -32,6 +37,8 @@
         <div id="status-posti" style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
         
         <div id="prodotti-list"></div>
+
+        <textarea id="note_ordine" placeholder="Note aggiuntive (allergie, richieste speciali...)"></textarea>
         
         <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
         <button class="send" id="btn-invia" onclick="inviaOrdine()">CONFERMA ORDINE</button>
@@ -46,18 +53,27 @@
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwxyK3ln4zbscynS4XZZjwK30QXzOvPFy8U5BiOOeO04Sgl3P-etOinBoJ-z0pbzoCVbw/exec"; 
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxN3r57W7_nDg-I--rVWILGen7gI8vAkw9WQiROxOiX6lNz7zhcADkffTBYI9w-yjloBw/exec";
     let listino = [];
+    let messaggioChiuso = "";
 
     async function loadData() {
         try {
             const resp = await fetch(WEB_APP_URL, { redirect: 'follow' });
             const data = await resp.json();
             listino = data.prodotti;
+            messaggioChiuso = data.messaggioChiuso || "Le prenotazioni sono chiuse. Grazie!";
             document.getElementById('main-title').innerText = data.titolo;
+            document.getElementById('loading').style.display = 'none';
+
+            if (data.postiResidui <= 0) {
+                document.getElementById('chiuso-msg').innerText = messaggioChiuso;
+                document.getElementById('chiuso-container').style.display = 'block';
+                return;
+            }
+
             document.getElementById('status-posti').innerText = `Posti liberi: ${data.postiResidui}`;
             render();
-            document.getElementById('loading').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
         } catch (e) {
             document.getElementById('loading').innerText = "Errore di connessione. Riprova.";
@@ -78,9 +94,8 @@
                 content.innerHTML += `
                     <div class="item-card">
                         <div><b>${p.name}</b><br><small>€${prezzoVal.toFixed(2)}</small></div>
-                        <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
-                    </div>
-                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
+                        <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI()" style="width:50px; margin:0">
+                    </div>`;
             });
             group.appendChild(content);
             listDiv.appendChild(group);
@@ -92,28 +107,11 @@
         content.style.display = content.style.display === 'block' ? 'none' : 'block';
     }
 
-    function updateUI(key) {
-        const q = parseInt(document.getElementById('qty_' + key).value) || 0;
-        const container = document.getElementById('bibs_' + key);
-        const p = listino.find(i => i.key === key);
-        
-        const hasDrink = p.items.some(id => ['key_22', 'key_23', 'key_24'].includes(id));
-
-        if (hasDrink && q > 0) {
-            container.style.display = 'block';
-            let options = p.items.some(id => id === 'key_23' || id === 'key_24') 
-                ? '<option value="birra">Birra</option>' 
-                : '<option value="coca">Coca</option><option value="fanta">Fanta</option><option value="the">The</option>';
-            container.innerHTML = '<b>Gusti bibite:</b><br>';
-            for(let i=0; i<q; i++) container.innerHTML += `<select class="sel-bib">${options}</select>`;
-        } else {
-            container.style.display = 'none';
-        }
-
+    function updateUI() {
         let tot = 0;
         listino.forEach(item => {
-            const qItem = parseInt(document.getElementById('qty_'+item.key).value) || 0;
-            tot += qItem * item.price;
+            const q = parseInt(document.getElementById('qty_' + item.key)?.value) || 0;
+            tot += q * item.price;
         });
         document.getElementById('display-total').innerText = tot.toFixed(2);
     }
@@ -121,30 +119,33 @@
     async function inviaOrdine() {
         const btn = document.getElementById('btn-invia');
         const nome = document.getElementById('user_name').value.trim();
-        const persone = document.getElementById('num_persone').value;
+        const persone = parseInt(document.getElementById('num_persone').value) || 0;
+        const note = document.getElementById('note_ordine').value.trim();
+
         if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
 
-        const payload = { 
-            nome, persone, ordine: Math.random().toString(36).substring(2, 7).toUpperCase(), 
+        const payload = {
+            nome,
+            persone,
             totale: document.getElementById('display-total').innerText,
-            note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
+            note: note
         };
 
         let qtyTot = 0;
         listino.forEach(p => {
-            const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
-            if(q > 0) { payload['qty_' + p.key] = q; qtyTot++; }
+            const q = parseInt(document.getElementById('qty_' + p.key)?.value) || 0;
+            if (q > 0) { payload['qty_' + p.key] = q; qtyTot++; }
         });
 
         if (qtyTot === 0) return alert("Scegli almeno un prodotto!");
 
-        // BLOCCO TASTO PER 30 SECONDI
+        // Blocca il tasto per 30 secondi
         btn.disabled = true;
         let countdown = 30;
         const timer = setInterval(() => {
             countdown--;
             btn.innerText = `ATTENDI ${countdown}s...`;
-            if(countdown <= 0) {
+            if (countdown <= 0) {
                 clearInterval(timer);
                 btn.innerText = "CONFERMA ORDINE";
                 btn.disabled = false;
@@ -152,19 +153,39 @@
         }, 1000);
 
         try {
-            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        const resp = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors',
+                body: JSON.stringify(payload)
+            });
+            const result = await resp.json();
+            clearInterval(timer);
+
+            if (result.status === "CHIUSO") {
+                alert(result.messaggio);
+                btn.disabled = false;
+                btn.innerText = "CONFERMA ORDINE";
+                return;
+            }
+
+            if (result.status === "ERROR") {
+                alert("Errore dal server: " + result.messaggio);
+                btn.disabled = false;
+                btn.innerText = "CONFERMA ORDINE";
+                return;
+            }
+
+            // status === "OK"
             document.getElementById('form-container').style.display = 'none';
             document.getElementById('successo').style.display = 'block';
-            document.getElementById('res-id').innerText = payload.ordine;
+            document.getElementById('res-id').innerText = result.codice || "✓";
         } catch (e) {
+            clearInterval(timer);
+            btn.disabled = false;
+            btn.innerText = "CONFERMA ORDINE";
             alert("Errore nell'invio. Riprova tra poco.");
         }
     }
-
-    loadData();
-</script>
-</body>
-</html>
 
     loadData();
 </script>
