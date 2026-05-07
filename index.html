@@ -3,131 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grigliata Rogoredo</title>
+    <title>Prenotazione Grigliata</title>
     <style>
-        :root { --primary: #d32f2f; --bg: #f4f4f4; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h1 { color: var(--primary); text-align: center; margin-bottom: 20px; }
-        .cat-btn { width: 100%; padding: 15px; margin-top: 10px; background: #eee; border: none; border-radius: 8px; text-align: left; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; }
-        .cat-content { display: none; padding: 10px; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px; }
-        .item-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #eee; }
-        .item-info h3 { margin: 0; font-size: 1rem; }
-        .price { color: #666; font-size: 0.9rem; }
-        input[type="number"] { width: 45px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .bibita-row { width: 100%; background: #fff5f5; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.85rem; box-sizing: border-box; }
-        select { width: 100%; padding: 5px; margin-top: 5px; }
-        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 15px; margin: 20px -20px -20px -20px; text-align: center; font-weight: bold; border-radius: 0 0 12px 12px; }
-        .send-btn { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; margin-top: 15px; font-weight: bold; cursor: pointer; }
+        :root { --primary: #d32f2f; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { color: var(--primary); text-align: center; margin-top: 0; }
+        .section-label { font-weight: bold; margin: 15px 0 5px; display: block; color: #444; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        .cat-group { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
+        .cat-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
+        .cat-content { display: none; padding: 10px; background: #fff; }
+        
+        .item-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #fafafa; }
+        .item-info { flex: 1; }
+        .item-info h3 { margin: 0; font-size: 0.95rem; }
+        .item-info span { color: #888; font-size: 0.85rem; }
+        
+        .bibite-sel { width: 100%; background: #fff9f9; padding: 10px; margin-top: 10px; border-radius: 6px; box-sizing: border-box; }
+        select { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; }
+
+        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 18px; margin: 20px -25px -25px; text-align: center; font-size: 1.3rem; font-weight: bold; }
+        button.send { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; margin-top: 20px; font-weight: bold; }
+        #loading { text-align: center; padding: 50px; font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Grigliata Rogoredo</h1>
-    <div id="loading" style="text-align:center; padding:20px;">Caricamento listino...</div>
+    <h1>Caricamento...</h1>
+    <div id="loading">Connessione al listino in corso...</div>
     
     <div id="form-container" style="display:none;">
-        <input type="text" id="user_name" placeholder="Tuo Nome e Cognome" style="width:100%; padding:12px; margin-bottom:15px; box-sizing:border-box; border:1px solid #ccc; border-radius:6px;">
+        <label class="section-label">Informazioni Prenotazione</label>
+        <input type="text" id="user_name" placeholder="Nome e Cognome">
+        <input type="number" id="num_persone" placeholder="In quanti siete?" min="1" value="1">
+        
+        <div id="status-posti" style="font-size: 0.8rem; text-align: center; margin-bottom: 15px;"></div>
+        
         <div id="prodotti-list"></div>
+        
         <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
-        <button class="send-btn" onclick="inviaOrdine()">CONFERMA ORDINE</button>
+        <button class="send" onclick="inviaOrdine()">CONFERMA ORDINE</button>
     </div>
 
-    <div id="conferma" style="display:none; text-align:center;">
-        <h2 style="color:#2e7d32;">Inviato! ✅</h2>
-        <p>Codice prenotazione:</p>
-        <h1 id="res-id" style="background:#eee; padding:15px; letter-spacing:5px;">-----</h1>
-        <button onclick="location.reload()" style="background:#666; color:white; border:none; padding:10px; border-radius:5px;">Nuovo ordine</button>
+    <div id="successo" style="display:none; text-align: center;">
+        <h2 style="color: #2e7d32;">Ordine Inviato! ✅</h2>
+        <p>Codice da mostrare in cassa:</p>
+        <h1 id="res-id" style="background: #eee; padding: 20px; border-radius: 10px; letter-spacing: 5px;">---</h1>
+        <button onclick="location.reload()" style="background:#666; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Fai un altro ordine</button>
     </div>
 </div>
 
 <script>
-    // --- METTI IL TUO URL QUI SOTTO ---
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwy-wsGtX-8VsczpRTS6XbSgl72kFBkPsAw9ZXWnjgZW7RNDehZHGpZ0DrMH-TdB7l-hA/exec"; 
+    const WEB_APP_URL = "INCOLLA_QUI_IL_TUO_URL_SCRIPT"; 
     let listino = [];
+    let postiDisponibili = 0;
 
-    async function loadListino() {
+    async function loadData() {
         try {
             const resp = await fetch(WEB_APP_URL, { redirect: 'follow' });
-            listino = await resp.json();
+            const data = await resp.json();
+            listino = data.prodotti;
+            postiDisponibili = data.postiResidui;
+            
+            document.querySelector('h1').innerText = data.titolo;
+            document.getElementById('status-posti').innerText = `Posti ancora disponibili: ${postiDisponibili}`;
+            
+            if (postiDisponibili <= 0) {
+                document.getElementById('loading').innerHTML = "<h2 style='color:red'>PRENOTAZIONI CHIUSE (Sold Out)</h2>";
+                return;
+            }
+
             render();
             document.getElementById('loading').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
-        } catch (e) { document.getElementById('loading').innerText = "Errore connessione."; }
+        } catch (e) {
+            document.getElementById('loading').innerText = "Errore di connessione. Ricarica la pagina.";
+        }
     }
 
     function render() {
         const listDiv = document.getElementById('prodotti-list');
-        const cats = [...new Set(listino.map(i => i.category))];
+        const categorie = [...new Set(listino.map(p => p.category))];
         
-        cats.forEach(c => {
-            const btn = document.createElement('button');
-            btn.className = 'cat-btn';
-            btn.innerHTML = `<span>${c}</span><span>+</span>`;
-            btn.onclick = () => {
-                const content = btn.nextElementSibling;
-                content.style.display = content.style.display === 'block' ? 'none' : 'block';
-            };
+        categorie.forEach(cat => {
+            const group = document.createElement('div');
+            group.className = 'cat-group';
+            group.innerHTML = `<div class="cat-header" onclick="toggleCat(this)">${cat} <span>▼</span></div>`;
             
-            const cont = document.createElement('div');
-            cont.className = 'cat-content';
+            const content = document.createElement('div');
+            content.className = 'cat-content';
             
-            listino.filter(i => i.category === c).forEach(item => {
+            listino.filter(p => p.category === cat).forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'item-card';
                 card.innerHTML = `
-                    <div class="item-info"><h3>${item.name}</h3><span class="price">€${Number(item.price).toFixed(2)}</span></div>
-                    <input type="number" id="qty_${item.key}" value="0" min="0" onchange="updateUI('${item.key}')">
-                    <div id="bibs_${item.key}" style="width:100%"></div>
+                    <div class="item-info">
+                        <h3>${p.name}</h3>
+                        <span>€${parseFloat(p.price).toFixed(2)}</span>
+                    </div>
+                    <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:60px; margin-bottom:0">
+                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>
                 `;
-                cont.appendChild(card);
+                content.appendChild(card);
             });
-            listDiv.appendChild(btn);
-            listDiv.appendChild(cont);
+            group.appendChild(content);
+            listDiv.appendChild(group);
         });
+    }
+
+    function toggleCat(el) {
+        const content = el.nextElementSibling;
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
     }
 
     function updateUI(key) {
         const q = parseInt(document.getElementById('qty_' + key).value) || 0;
         const container = document.getElementById('bibs_' + key);
-        if (key.startsWith('men_')) {
-            container.innerHTML = '';
-            for (let i = 1; i <= q; i++) {
-                container.innerHTML += `<div class="bibita-row">Bibita #${i}: <select class="sel-bib" data-parent="${key}">
-                    <option value="coca">Coca Cola</option><option value="fan">Fanta</option><option value="spr">Sprite</option>
-                    <option value="thl">The Limone</option><option value="thp">The Pesca</option><option value="bir_p">Birra Piccola</option>
-                </select></div>`;
+        const p = listino.find(item => item.key === key);
+
+        // Se il prodotto è un menu e ha una delle bibite elementari tra i componenti
+        // Assumi che key_22 (Bibita), key_23 (Birra Piccola), key_24 (Birra Media) siano le bevande
+        const bevandaKeys = ['key_22', 'key_23', 'key_24'];
+        const hasDrink = p.items.some(i => bevandaKeys.includes(i));
+
+        if (hasDrink && q > 0) {
+            container.style.display = 'block';
+            container.innerHTML = '<b>Scegli bevande:</b>';
+            let options = p.items.some(i => i === 'key_23' || i === 'key_24') 
+                ? '<option value="birra">Birra</option>'
+                : '<option value="coca">Coca</option><option value="fanta">Fanta</option><option value="sprite">Sprite</option><option value="the">The</option>';
+            
+            for(let i=1; i<=q; i++) {
+                container.innerHTML += `<select class="sel-bib" data-parent="${key}">${options}</select>`;
             }
+        } else {
+            container.style.display = 'none';
         }
+        
         let tot = 0;
-        listino.forEach(i => tot += (parseInt(document.getElementById('qty_'+i.key).value)||0) * Number(i.price));
+        listino.forEach(item => {
+            const val = parseInt(document.getElementById('qty_' + item.key).value) || 0;
+            tot += val * parseFloat(item.price);
+        });
         document.getElementById('display-total').innerText = tot.toFixed(2);
     }
 
     async function inviaOrdine() {
-        const nome = document.getElementById('user_name').value;
-        if(!nome) return alert("Inserisci il nome");
-        const orderId = Math.random().toString(36).substring(2,7).toUpperCase();
-        const payload = { nome: nome, ordine: orderId };
-        
-        listino.forEach(i => {
-            const q = document.getElementById('qty_'+i.key).value;
-            if(q > 0) payload['qty_'+i.key] = q;
+        const nome = document.getElementById('user_name').value.trim();
+        const persone = parseInt(document.getElementById('num_persone').value);
+        if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
+        if (persone > postiDisponibili) return alert("Posti insufficienti!");
+
+        const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const payload = { 
+            nome: nome, 
+            persone: persone, 
+            ordine: orderId,
+            totale: document.getElementById('display-total').innerText,
+            note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
+        };
+
+        let count = 0;
+        listino.forEach(p => {
+            const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
+            if (q > 0) { payload['qty_' + p.key] = q; count++; }
         });
 
-        // Prende le bibite selezionate
-        document.querySelectorAll('.sel-bib').forEach((s, idx) => {
-            payload['bibita_' + idx] = s.value;
-        });
+        if (count === 0) return alert("Ordine vuoto!");
 
-        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        document.getElementById('form-container').style.display = 'none';
-        document.getElementById('conferma').style.display = 'block';
-        document.getElementById('res-id').innerText = orderId;
+        document.getElementById('form-container').style.opacity = "0.5";
+        document.getElementById('form-container').style.pointerEvents = "none";
+
+        try {
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('successo').style.display = 'block';
+            document.getElementById('res-id').innerText = orderId;
+        } catch (e) {
+            alert("Errore invio. Riprova.");
+            document.getElementById('form-container').style.opacity = "1";
+            document.getElementById('form-container').style.pointerEvents = "auto";
+        }
     }
 
-    loadListino();
+    loadData();
 </script>
 </body>
 </html>
