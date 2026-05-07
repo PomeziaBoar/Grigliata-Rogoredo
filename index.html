@@ -78,115 +78,140 @@
 
             render();
             document.getElementById('loading').style.display = 'none';
+            document.getElementById('f<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prenotazione Grigliata</title>
+    <style>
+        :root { --primary: #d32f2f; --bg: #f8f9fa; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { color: var(--primary); text-align: center; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .cat-group { margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        .cat-header { background: #f1f1f1; padding: 15px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
+        .cat-content { display: none; padding: 10px; }
+        .item-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .bibite-sel { background: #fff5f5; padding: 10px; border-radius: 6px; margin-top: 5px; font-size: 0.9rem; }
+        .total-bar { position: sticky; bottom: 0; background: var(--primary); color: white; padding: 20px; margin: 20px -25px -25px; text-align: center; font-size: 1.2rem; font-weight: bold; }
+        .send { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="main-title">Grigliata Rogoredo</h1>
+    <div id="loading" style="text-align:center">Caricamento listino...</div>
+    
+    <div id="form-container" style="display:none;">
+        <input type="text" id="user_name" placeholder="Tuo Nome e Cognome">
+        <input type="number" id="num_persone" placeholder="In quanti siete?" min="1" value="1">
+        <div id="status-posti" style="text-align:center; font-size:0.8rem; color:#666; margin-bottom:10px;"></div>
+        <div id="prodotti-list"></div>
+        <div class="total-bar">Totale: <span id="display-total">0.00</span>€</div>
+        <button class="send" onclick="inviaOrdine()">CONFERMA ORDINE</button>
+    </div>
+
+    <div id="successo" style="display:none; text-align:center;">
+        <h2 style="color:#2e7d32;">Inviato! ✅</h2>
+        <p>Codice prenotazione:</p>
+        <h1 id="res-id" style="background:#eee; padding:20px; letter-spacing:5px;">---</h1>
+        <button onclick="location.reload()">Nuovo Ordine</button>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "INCOLLA_QUI_IL_TUO_NUOVO_URL_DEPLOY"; 
+    let listino = [];
+
+    async function loadData() {
+        try {
+            // Aggiungiamo redirect follow per risolvere problemi CORS su alcuni browser
+            const resp = await fetch(WEB_APP_URL, { redirect: 'follow' });
+            if (!resp.ok) throw new Error();
+            const data = await resp.json();
+            listino = data.prodotti;
+            document.getElementById('main-title').innerText = data.titolo;
+            document.getElementById('status-posti').innerText = `Posti liberi: ${data.postiResidui}`;
+            render();
+            document.getElementById('loading').style.display = 'none';
             document.getElementById('form-container').style.display = 'block';
         } catch (e) {
-            document.getElementById('loading').innerText = "Errore di connessione. Ricarica la pagina.";
+            document.getElementById('loading').innerText = "Errore connessione. Verifica l'URL dello script.";
         }
     }
 
     function render() {
         const listDiv = document.getElementById('prodotti-list');
-        const categorie = [...new Set(listino.map(p => p.category))];
-        
-        categorie.forEach(cat => {
+        const cats = [...new Set(listino.map(p => p.category))];
+        cats.forEach(c => {
             const group = document.createElement('div');
             group.className = 'cat-group';
-            group.innerHTML = `<div class="cat-header" onclick="toggleCat(this)">${cat} <span>▼</span></div>`;
-            
+            group.innerHTML = `<div class="cat-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">${c} <span>▼</span></div>`;
             const content = document.createElement('div');
             content.className = 'cat-content';
-            
-            listino.filter(p => p.category === cat).forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'item-card';
-                card.innerHTML = `
-                    <div class="item-info">
-                        <h3>${p.name}</h3>
-                        <span>€${parseFloat(p.price).toFixed(2)}</span>
+            listino.filter(p => p.category === c).forEach(p => {
+                content.innerHTML += `
+                    <div class="item-card">
+                        <div><b>${p.name}</b><br><small>€${p.price.toFixed(2)}</small></div>
+                        <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
                     </div>
-                    <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:60px; margin-bottom:0">
-                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>
-                `;
-                content.appendChild(card);
+                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
             });
             group.appendChild(content);
             listDiv.appendChild(group);
         });
     }
 
-    function toggleCat(el) {
-        const content = el.nextElementSibling;
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    }
-
     function updateUI(key) {
         const q = parseInt(document.getElementById('qty_' + key).value) || 0;
         const container = document.getElementById('bibs_' + key);
-        const p = listino.find(item => item.key === key);
-
-        // Se il prodotto è un menu e ha una delle bibite elementari tra i componenti
-        // Assumi che key_22 (Bibita), key_23 (Birra Piccola), key_24 (Birra Media) siano le bevande
-        const bevandaKeys = ['key_22', 'key_23', 'key_24'];
-        const hasDrink = p.items.some(i => bevandaKeys.includes(i));
+        const p = listino.find(i => i.key === key);
+        
+        // Cerca se nei componenti del menu ci sono le key delle bevande (key_22, key_23, key_24)
+        const hasDrink = p.items.some(id => ['key_22', 'key_23', 'key_24'].includes(id));
 
         if (hasDrink && q > 0) {
             container.style.display = 'block';
-            container.innerHTML = '<b>Scegli bevande:</b>';
-            let options = p.items.some(i => i === 'key_23' || i === 'key_24') 
-                ? '<option value="birra">Birra</option>'
+            let options = p.items.some(id => id === 'key_23' || id === 'key_24') 
+                ? '<option value="birra">Birra</option>' 
                 : '<option value="coca">Coca</option><option value="fanta">Fanta</option><option value="sprite">Sprite</option><option value="the">The</option>';
-            
-            for(let i=1; i<=q; i++) {
-                container.innerHTML += `<select class="sel-bib" data-parent="${key}">${options}</select>`;
-            }
+            container.innerHTML = 'Gusti bibite:';
+            for(let i=0; i<q; i++) container.innerHTML += `<select class="sel-bib">${options}</select>`;
         } else {
             container.style.display = 'none';
         }
-        
+
         let tot = 0;
-        listino.forEach(item => {
-            const val = parseInt(document.getElementById('qty_' + item.key).value) || 0;
-            tot += val * parseFloat(item.price);
-        });
+        listino.forEach(item => tot += (parseInt(document.getElementById('qty_'+item.key).value)||0) * item.price);
         document.getElementById('display-total').innerText = tot.toFixed(2);
     }
 
     async function inviaOrdine() {
         const nome = document.getElementById('user_name').value.trim();
-        const persone = parseInt(document.getElementById('num_persone').value);
-        if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
-        if (persone > postiDisponibili) return alert("Posti insufficienti!");
+        const persone = document.getElementById('num_persone').value;
+        if (!nome || persone < 1) return alert("Completa i dati!");
 
         const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
         const payload = { 
-            nome: nome, 
-            persone: persone, 
-            ordine: orderId,
+            nome, persone, ordine: orderId, 
             totale: document.getElementById('display-total').innerText,
             note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
         };
 
-        let count = 0;
         listino.forEach(p => {
             const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
-            if (q > 0) { payload['qty_' + p.key] = q; count++; }
+            if(q > 0) payload['qty_' + p.key] = q;
         });
 
-        if (count === 0) return alert("Ordine vuoto!");
-
-        document.getElementById('form-container').style.opacity = "0.5";
-        document.getElementById('form-container').style.pointerEvents = "none";
-
-        try {
-            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            document.getElementById('form-container').style.display = 'none';
-            document.getElementById('successo').style.display = 'block';
-            document.getElementById('res-id').innerText = orderId;
-        } catch (e) {
-            alert("Errore invio. Riprova.");
-            document.getElementById('form-container').style.opacity = "1";
-            document.getElementById('form-container').style.pointerEvents = "auto";
-        }
+        document.getElementById('form-container').style.opacity = "0.3";
+        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        
+        document.getElementById('form-container').style.display = 'none';
+        document.getElementById('successo').style.display = 'block';
+        document.getElementById('res-id').innerText = orderId;
     }
 
     loadData();
