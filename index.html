@@ -143,27 +143,7 @@
         }
     }
 
-    function render() {
-        const listDiv = document.getElementById('prodotti-list');
-        const cats = [...new Set(listino.map(p => p.category))];
-        cats.forEach(c => {
-            const group = document.createElement('div');
-            group.className = 'cat-group';
-            group.innerHTML = `<div class="cat-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">${c} <span>▼</span></div>`;
-            const content = document.createElement('div');
-            content.className = 'cat-content';
-            listino.filter(p => p.category === c).forEach(p => {
-                content.innerHTML += `
-                    <div class="item-card">
-                        <div><b>${p.name}</b><br><small>€${p.price.toFixed(2)}</small></div>
-                        <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
-                    </div>
-                    <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
-            });
-            group.appendChild(content);
-            listDiv.appendChild(group);
-        });
-    }
+    
 
     function updateUI(key) {
         const q = parseInt(document.getElementById('qty_' + key).value) || 0;
@@ -189,10 +169,30 @@
         document.getElementById('display-total').innerText = tot.toFixed(2);
     }
 
-    async function inviaOrdine() {
+// ... (mantenere la parte iniziale dell'HTML/CSS inviata prima)
+
+async function inviaOrdine() {
+    const btn = document.querySelector('button.send');
     const nome = document.getElementById('user_name').value.trim();
     const persone = parseInt(document.getElementById('num_persone').value);
+    
     if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
+
+    // DISABILITA PULSANTE
+    btn.disabled = true;
+    btn.style.backgroundColor = "#999";
+    let secondi = 30;
+    
+    const intervallo = setInterval(() => {
+        secondi--;
+        btn.innerText = `ATTENDI ${secondi}s...`;
+        if (secondi <= 0) {
+            clearInterval(intervallo);
+            btn.disabled = false;
+            btn.innerText = "CONFERMA ORDINE";
+            btn.style.backgroundColor = "#2e7d32";
+        }
+    }, 1000);
 
     const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
     const payload = { 
@@ -201,35 +201,56 @@
         note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
     };
 
-    let count = 0;
+    let itemScelti = 0;
     listino.forEach(p => {
         const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
-        if(q > 0) { payload['qty_' + p.key] = q; count++; }
+        if(q > 0) { payload['qty_' + p.key] = q; itemScelti++; }
     });
 
-    if (count === 0) return alert("Ordine vuoto!");
+    if (itemScelti === 0) {
+        alert("Ordine vuoto!");
+        clearInterval(intervallo);
+        btn.disabled = false;
+        btn.innerText = "CONFERMA ORDINE";
+        btn.style.backgroundColor = "#2e7d32";
+        return;
+    }
 
-    document.getElementById('form-container').style.opacity = "0.3";
-    
     try {
-        const response = await fetch(WEB_APP_URL, { 
-            method: 'POST', 
-            mode: 'no-cors', // Manteniamo no-cors per Google Script
-            body: JSON.stringify(payload) 
-        });
-        
-        // Dato che con no-cors non possiamo leggere la risposta "SOLD_OUT",
-        // il controllo principale avviene al caricamento della pagina (loadData).
-        // Se qualcuno "bara" e invia l'ordine proprio mentre i posti finiscono,
-        // lo script Google scarterà l'ordine e non scriverà nulla nel foglio.
-
+        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         document.getElementById('form-container').style.display = 'none';
         document.getElementById('successo').style.display = 'block';
         document.getElementById('res-id').innerText = orderId;
     } catch (e) {
         alert("Errore invio.");
-        document.getElementById('form-container').style.opacity = "1";
     }
+}
+
+// Correzione nel render() per evitare il bug toFixed
+function render() {
+    const listDiv = document.getElementById('prodotti-list');
+    listDiv.innerHTML = ""; // Pulisce prima di renderizzare
+    const cats = [...new Set(listino.map(p => p.category))];
+    
+    cats.forEach(c => {
+        const group = document.createElement('div');
+        group.className = 'cat-group';
+        group.innerHTML = `<div class="cat-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'block' ? 'none' : 'block'">${c} <span>▼</span></div>`;
+        const content = document.createElement('div');
+        content.className = 'cat-content';
+        
+        listino.filter(p => p.category === c).forEach(p => {
+            const prezzoSicuro = typeof p.price === 'number' ? p.price : 0;
+            content.innerHTML += `
+                <div class="item-card">
+                    <div><b>${p.name}</b><br><small>€${prezzoSicuro.toFixed(2)}</small></div>
+                    <input type="number" id="qty_${p.key}" value="0" min="0" onchange="updateUI('${p.key}')" style="width:50px; margin:0">
+                </div>
+                <div id="bibs_${p.key}" class="bibite-sel" style="display:none"></div>`;
+        });
+        group.appendChild(content);
+        listDiv.appendChild(group);
+    });
 }
 
     loadData();
