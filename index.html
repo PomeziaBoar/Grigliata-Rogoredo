@@ -190,29 +190,47 @@
     }
 
     async function inviaOrdine() {
-        const nome = document.getElementById('user_name').value.trim();
-        const persone = document.getElementById('num_persone').value;
-        if (!nome || persone < 1) return alert("Completa i dati!");
+    const nome = document.getElementById('user_name').value.trim();
+    const persone = parseInt(document.getElementById('num_persone').value);
+    if (!nome || persone < 1) return alert("Inserisci nome e numero persone!");
 
-        const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
-        const payload = { 
-            nome, persone, ordine: orderId, 
-            totale: document.getElementById('display-total').innerText,
-            note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
-        };
+    const orderId = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const payload = { 
+        nome, persone, ordine: orderId, 
+        totale: document.getElementById('display-total').innerText,
+        note_bibite: Array.from(document.querySelectorAll('.sel-bib')).map(s => s.value).join(", ")
+    };
 
-        listino.forEach(p => {
-            const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
-            if(q > 0) payload['qty_' + p.key] = q;
+    let count = 0;
+    listino.forEach(p => {
+        const q = parseInt(document.getElementById('qty_' + p.key).value) || 0;
+        if(q > 0) { payload['qty_' + p.key] = q; count++; }
+    });
+
+    if (count === 0) return alert("Ordine vuoto!");
+
+    document.getElementById('form-container').style.opacity = "0.3";
+    
+    try {
+        const response = await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', // Manteniamo no-cors per Google Script
+            body: JSON.stringify(payload) 
         });
-
-        document.getElementById('form-container').style.opacity = "0.3";
-        await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
         
+        // Dato che con no-cors non possiamo leggere la risposta "SOLD_OUT",
+        // il controllo principale avviene al caricamento della pagina (loadData).
+        // Se qualcuno "bara" e invia l'ordine proprio mentre i posti finiscono,
+        // lo script Google scarterà l'ordine e non scriverà nulla nel foglio.
+
         document.getElementById('form-container').style.display = 'none';
         document.getElementById('successo').style.display = 'block';
         document.getElementById('res-id').innerText = orderId;
+    } catch (e) {
+        alert("Errore invio.");
+        document.getElementById('form-container').style.opacity = "1";
     }
+}
 
     loadData();
 </script>
