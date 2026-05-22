@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica Prenotazione</title>
+    <style>
+        :root { --primary: #d32f2f; --green: #2e7d32; --bg: #f8f9fa; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        h1 { color: var(--primary); text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 25px; }
+        .search-row { display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; letter-spacing: 3px; text-transform: uppercase; font-family: monospace; }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        button { padding: 12px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        button:disabled { background: #999; cursor: not-allowed; }
+ 
+        .risultato { margin-top: 25px; display: none; }
+        .card-header { background: var(--green); color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+        .card-header h2 { margin: 0 0 8px 0; font-size: 1.3rem; }
+        .card-header .totale { font-size: 2rem; font-weight: bold; }
+        .card-header .note-header { margin-top: 10px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; }
+        .card-body { border: 2px solid var(--green); border-top: none; border-radius: 0 0 10px 10px; padding: 15px 20px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .item-row:last-child { border-bottom: none; }
+        .item-qty { background: var(--primary); color: white; border-radius: 12px; padding: 3px 12px; font-weight: bold; font-size: 0.9rem; white-space: nowrap; margin-left: 10px; }
+        .note-box { margin-top: 12px; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 10px 14px; font-size: 0.9rem; color: #5d4037; }
+        .codice-badge { text-align: center; margin-top: 15px; font-family: monospace; font-size: 1.4rem; letter-spacing: 5px; color: #888; }
+ 
+        .errore { margin-top: 20px; background: #ffebee; border: 1px solid #ef9a9a; border-radius: 10px; padding: 20px; text-align: center; color: var(--primary); display: none; }
+        .loading { text-align: center; padding: 20px; color: #888; display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Verifica Ordine</h1>
+    <p class="subtitle">Inserisci il codice prenotazione per vedere i dettagli</p>
+ 
+    <div class="search-row">
+        <input type="text" id="input-codice" placeholder="Es. AB3XY" maxlength="5" oninput="this.value=this.value.toUpperCase()">
+        <button id="btn-cerca" onclick="cercaOrdine()">Cerca</button>
+    </div>
+ 
+    <div class="loading" id="loading">Ricerca in corso...</div>
+ 
+    <div class="risultato" id="risultato">
+        <div class="card-header">
+            <h2 id="res-nome"></h2>
+            <div class="totale" id="res-totale"></div>
+            <div class="note-header" id="res-note-header" style="display:none"></div>
+        </div>
+        <div class="card-body">
+            <div id="res-ordine"></div>
+        </div>
+        <div class="codice-badge" id="res-codice"></div>
+        <div class="search-row" style="margin-top: 20px;">
+            <input type="text" id="input-codice-2" placeholder="Nuovo codice..." maxlength="5" oninput="this.value=this.value.toUpperCase()">
+            <button onclick="cercaAltro()">Cerca</button>
+        </div>
+    </div>
+ 
+    <div class="errore" id="errore">
+        ❌ Codice non trovato.<br><small>Controlla il codice e riprova.</small>
+    </div>
+</div>
+ 
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj_rqGvL6KrX8MInyhXfZP0JHiYH83b5NQ4mf-ubrFFeHYqp72lNLmWofafT6sFu0CNQ/exec";
+ 
+    async function cercaOrdine() {
+        const codice = document.getElementById('input-codice').value.trim().toUpperCase();
+        if (codice.length < 3) return alert("Inserisci un codice valido");
+ 
+        const btn = document.getElementById('btn-cerca');
+        btn.disabled = true;
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('risultato').style.display = 'none';
+        document.getElementById('errore').style.display = 'none';
+ 
+        try {
+            const resp = await fetch(WEB_APP_URL + "?codice=" + codice, { redirect: 'follow' });
+            const data = await resp.json();
+ 
+            document.getElementById('loading').style.display = 'none';
+            btn.disabled = false;
+ 
+            if (data.status !== "OK") {
+                document.getElementById('errore').style.display = 'block';
+                return;
+            }
+ 
+            // Popola la card
+            document.getElementById('res-nome').innerText = data.nome;
+            document.getElementById('res-totale').innerText = `€ ${parseFloat(String(data.totale).replace(',','.')).toFixed(2)}`;
+            document.getElementById('res-codice').innerText = codice;
+ 
+            // Note nell'header
+            const noteHeader = document.getElementById('res-note-header');
+            if (data.note && data.note.toString().trim()) {
+                noteHeader.innerText = "📝 " + data.note;
+                noteHeader.style.display = 'block';
+            } else {
+                noteHeader.style.display = 'none';
+            }
+ 
+            // Lista prodotti
+            const ordineDiv = document.getElementById('res-ordine');
+            ordineDiv.innerHTML = data.ordine.map(item => `
+                <div class="item-row">
+                    <span>${item.nome}</span>
+                    <span class="item-qty">×${item.qty}</span>
+                </div>
+            `).join('');
+ 
+            // Note
+            const noteBox = document.getElementById('res-note');
+            if (data.note && data.note.toString().trim()) {
+                noteBox.innerText = "📝 " + data.note;
+                noteBox.style.display = 'block';
+            } else {
+                noteBox.style.display = 'none';
+            }
+ 
+            document.getElementById('risultato').style.display = 'block';
+ 
+        } catch(e) {
+            document.getElementById('loading').style.display = 'none';
+            btn.disabled = false;
+            alert("Errore di connessione. Riprova.");
+        }
+    }
+ 
+    // Cerca anche premendo Invio
+    document.getElementById('input-codice').addEventListener('keydown', e => {
+        if (e.key === 'Enter') cercaOrdine();
+    });
+ 
+    function cercaAltro() {
+        const codice = document.getElementById('input-codice-2').value.trim().toUpperCase();
+        document.getElementById('input-codice').value = codice;
+        document.getElementById('input-codice-2').value = '';
+        cercaOrdine();
+    }
+ 
+    document.getElementById('input-codice-2').addEventListener('keydown', e => {
+        if (e.key === 'Enter') cercaAltro();
+    });
+</script>
+</body>
+</html>
